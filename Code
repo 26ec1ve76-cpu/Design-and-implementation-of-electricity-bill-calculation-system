@@ -1,0 +1,128 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_MONTHS 12
+#define NAME_LENGTH 50
+
+int main(void) {
+    const double RATE_1 = 5.0;   /* First 100 units */
+    const double RATE_2 = 7.0;   /* Next 200 units */
+    const double RATE_3 = 10.0;  /* Above 300 units */
+    const double FIXED_CHARGE = 50.0;
+
+    const char *monthNames[MAX_MONTHS] = {
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    };
+
+    char customerName[NAME_LENGTH];
+    double units[MAX_MONTHS];
+    double bills[MAX_MONTHS];
+    int monthCount = 0;
+    char answer;
+
+    printf("===== Month-wise Electricity Bill Calculator =====\n");
+    printf("Enter customer name: ");
+
+    if (fgets(customerName, sizeof(customerName), stdin) == NULL) {
+        printf("Error reading customer name.\n");
+        return 1;
+    }
+
+    customerName[strcspn(customerName, "\n")] = '\0';
+
+    do {
+        double energyCharge;
+
+        if (monthCount >= MAX_MONTHS) {
+            printf("\nYou have entered all 12 months.\n");
+            break;
+        }
+
+        printf("\nEnter units used in %s: ", monthNames[monthCount]);
+
+        if (scanf("%lf", &units[monthCount]) != 1 || units[monthCount] < 0) {
+            printf("Error: Enter a valid, non-negative number of units.\n");
+            return 1;
+        }
+
+        if (units[monthCount] <= 100) {
+            energyCharge = units[monthCount] * RATE_1;
+        } else if (units[monthCount] <= 300) {
+            energyCharge = (100 * RATE_1)
+                         + ((units[monthCount] - 100) * RATE_2);
+        } else {
+            energyCharge = (100 * RATE_1)
+                         + (200 * RATE_2)
+                         + ((units[monthCount] - 300) * RATE_3);
+        }
+
+        bills[monthCount] = energyCharge + FIXED_CHARGE;
+        monthCount++;
+
+        if (monthCount == MAX_MONTHS) {
+            break;
+        }
+
+        printf("Add another month? (y/n): ");
+        scanf(" %c", &answer);
+
+    } while (answer == 'y' || answer == 'Y');
+
+    if (monthCount == 0) {
+        printf("No monthly data was entered.\n");
+        return 0;
+    }
+
+    int lowestIndex = 0;
+    int highestIndex = 0;
+    double total = 0.0;
+    double maxBill = bills[0];
+
+    for (int i = 0; i < monthCount; i++) {
+        total += bills[i];
+
+        if (bills[i] < bills[lowestIndex]) {
+            lowestIndex = i;
+        }
+
+        if (bills[i] > maxBill) {
+            maxBill = bills[i];
+            highestIndex = i;
+        }
+    }
+
+    printf("\n========== Monthly Bill Summary ==========\n");
+    printf("Customer: %s\n\n", customerName);
+    printf("%-12s %-12s %-15s\n", "Month", "Units", "Bill (Rs.)");
+
+    for (int i = 0; i < monthCount; i++) {
+        printf("%-12s %-12.2f Rs. %-12.2f\n",
+               monthNames[i], units[i], bills[i]);
+    }
+
+    printf("\nTotal bill: Rs. %.2f\n", total);
+    printf("Average bill: Rs. %.2f\n", total / monthCount);
+    printf("Lowest bill: %s (Rs. %.2f)\n",
+           monthNames[lowestIndex], bills[lowestIndex]);
+    printf("Highest bill: %s (Rs. %.2f)\n",
+           monthNames[highestIndex], bills[highestIndex]);
+
+    /* Simple text graph; each # represents approximately Rs. 50 */
+    printf("\nBill graph (each # is approximately Rs. 50):\n");
+
+    for (int i = 0; i < monthCount; i++) {
+        int bars = (int)(bills[i] / 50.0);
+
+        printf("%-12s | ", monthNames[i]);
+
+        for (int j = 0; j < bars; j++) {
+            printf("#");
+        }
+
+        printf(" Rs. %.2f\n", bills[i]);
+    }
+
+    return 0;
+}
